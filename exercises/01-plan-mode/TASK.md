@@ -13,15 +13,15 @@ Plan mode flips the dynamic: **you decide what happens, then Claude executes.**
 Open Claude Code in this directory and say:
 
 ```
-Add tags to all resources in this VPC module and make the CIDR blocks configurable via variables.
+Clean up this VPC module — fix the inconsistent naming, add tags, and make CIDR blocks configurable.
 ```
 
-Watch what it does. It'll jump straight to editing — extracting variables, adding tag blocks. Don't approve anything yet. Just look at what it chose to do.
+Watch what it does. It'll jump straight to editing. Don't approve anything yet. Just look at what it chose to do.
 
 Ask yourself:
-- Did it consider that renaming resource addresses would require `tofu state mv`?
-- Did it pick reasonable variable names, or would you have chosen differently?
-- Did it touch the subnet naming inconsistency (pub1 vs priv_2) while it was in there?
+- Did it rename resource addresses (like `pub1` → `public_1`)? That would require `tofu state mv` on real infrastructure.
+- Did it ask if renaming was safe, or just do it?
+- Would you have caught the state implications while reviewing those diffs?
 
 The work is probably fine. But **you're reviewing decisions you didn't make.** For a Python script, that's OK. For Terraform managing real infrastructure, you want to be driving.
 
