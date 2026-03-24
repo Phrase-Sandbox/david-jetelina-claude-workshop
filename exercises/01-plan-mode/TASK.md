@@ -2,7 +2,7 @@
 
 ## The Problem
 
-Claude Code in execute mode is reactive — it proposes edits and you review diffs on the spot. That works for simple tasks, but for infrastructure work you want to shape the approach *before* any code changes.
+Claude Code in execute mode is fast — it reads the code, makes decisions, and proposes edits. That's great for simple tasks. But for infrastructure work, the problem isn't the quality of the edits — it's that **Claude decided the scope for you.**
 
 Plan mode flips the dynamic: **you decide what happens, then Claude executes.**
 
@@ -16,31 +16,31 @@ Open Claude Code in this directory and say:
 Clean up this VPC module — fix the inconsistent naming, add tags, and make CIDR blocks configurable.
 ```
 
-Watch what it does. It'll jump straight to editing. Don't approve anything yet. Just look at what it chose to do.
+Watch what it does. It'll read the module and immediately start making decisions. Don't approve anything yet. Just look at what it *chose* to do — and what it chose to *ignore*.
 
 Ask yourself:
-- Did it rename resource addresses (like `pub1` → `public_1`)? That would require `tofu state mv` on real infrastructure.
-- Did it ask if renaming was safe, or just do it?
-- Would you have caught the state implications while reviewing those diffs?
+- You said "fix naming" — did it fix the tag names, the resource names, or both? Did it ask which you meant?
+- What about the hardcoded availability zones? The missing NAT gateway tags? Did it decide those were out of scope, or did you?
+- It probably made reasonable choices. But they were *its* choices, not yours. Would you have prioritized differently?
 
-The work is probably fine. But **you're reviewing decisions you didn't make.** For a Python script, that's OK. For Terraform managing real infrastructure, you want to be driving.
+The work is probably fine. But you're reviewing a scope you didn't set. For a Python script, no big deal. For Terraform managing production infrastructure, you want to be the one deciding what changes and what doesn't.
 
 Hit `Ctrl+C`.
 
 ### Step 2: Now use plan mode
 
-Press `Shift+Tab` to enter plan mode (the input indicator changes). Now try a vague prompt:
+Press `Shift+Tab` to enter plan mode (the input indicator changes). Give the same prompt:
 
 ```
-Clean up this VPC module. It's a mess.
+Clean up this VPC module — fix the inconsistent naming, add tags, and make CIDR blocks configurable.
 ```
 
 Notice the difference:
-- It asks what you mean by "clean up"
+- It asks clarifying questions instead of deciding for you
 - It proposes an approach and waits for your input
-- No diffs until you agree on what should change
+- No diffs until you agree on the scope
 
-You're shaping the plan instead of reacting to edits.
+You're setting the scope instead of reacting to someone else's choices.
 
 ### Step 3: Be specific
 
@@ -59,10 +59,10 @@ Notice how the plan is now precise and safe. That last constraint — "don't ren
 ### Step 4: Compare
 
 Think about the two experiences:
-- **Execute mode**: Clear instruction → Claude charges ahead, you review diffs reactively
-- **Plan mode**: Vague or complex task → you shape the approach together before any code changes
+- **Execute mode**: Claude decided what "clean up" means, what's in scope, what to skip → you review
+- **Plan mode**: You decide what's in scope, what to skip, what constraints matter → Claude executes
 
-For infra work, plan mode should be your default.
+Same tool, same prompt, different dynamic. For infra work, plan mode should be your default.
 
 ## Shortcut
 
@@ -70,4 +70,4 @@ For infra work, plan mode should be your default.
 
 ## Key Lesson
 
-The issue with execute mode isn't that Claude does bad work — it usually doesn't. The issue is that **you're reviewing choices you didn't make** instead of making them. Plan mode puts you back in the driver's seat.
+The issue with execute mode isn't that Claude does bad work — it usually doesn't. The issue is that **Claude decided the scope for you.** What got fixed, what got ignored, what trade-offs were made — those were all Claude's calls, not yours. Plan mode puts you back in the driver's seat.
