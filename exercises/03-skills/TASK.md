@@ -28,7 +28,23 @@ Key things to notice:
 
 > **Note:** This skill's source lives under `commands/` in the plugin directory. That's a legacy convention — `commands/` and `skills/` work identically, but `skills/` is the recommended path going forward.
 
-### Step 2: Write your own skill
+### Step 2: Watch it run
+
+Now let's see that recipe execute. Run the code-review skill on a sample PR in this repo:
+
+```
+/code-review https://github.com/Phrase-Sandbox/david-jetelina-claude-workshop/pull/1
+```
+
+Watch how it:
+- Checks pre-conditions (is the PR open? draft? already reviewed?)
+- Spawns parallel agents to scan for bugs and CLAUDE.md violations
+- Validates findings to filter false positives
+- Reports results
+
+There are real issues planted in this PR. See how many the review catches.
+
+### Step 3: Write your own skill
 
 Now create one. Think of a workflow your team repeats — something where you've seen mistakes or where people skip steps. Some ideas:
 
@@ -54,7 +70,7 @@ Use the techniques from Exercise 2:
 - **Be specific** about commands and checks
 - **Add the why** so Claude can reason about edge cases
 
-### Step 3: Test your skill
+### Step 4: Test your skill
 
 Try to trigger your skill by giving Claude a task it should apply to. Then try to break it — give a prompt that might tempt Claude to skip the workflow.
 
@@ -62,4 +78,4 @@ Did it hold? If not, tighten the wording — add a gate, make a command more spe
 
 ## Key Lesson
 
-Skills are just team runbooks in a format Claude can follow. The code-review skill you read in step 1 is the same kind of thing as the skill you wrote in step 2 — packaged instructions that enforce a workflow. Any repeated process your team has ("always check X before Y", "never do Z without confirming") can be a skill. Write them like you'd write CLAUDE.md: specific, gated, with the why.
+Skills are just team runbooks in a format Claude can follow. The code-review skill you read in step 1 and ran in step 2 is the same kind of thing as the skill you wrote in step 3 — packaged instructions that enforce a workflow. Any repeated process your team has ("always check X before Y", "never do Z without confirming") can be a skill. Write them like you'd write CLAUDE.md: specific, gated, with the why.
