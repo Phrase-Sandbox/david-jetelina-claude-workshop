@@ -2,106 +2,79 @@
 
 ## The Problem
 
-Most people write CLAUDE.md like a wish list. Claude reads it, nods politely, and does whatever it wants.
+Look at `bad-claude.md` in this directory. Every line is a reasonable instruction. "Do not run `tofu apply`." "Never delete resources that might be used elsewhere." These aren't vague — they're clear, specific rules.
 
-Good CLAUDE.md files are **instructions, not suggestions**. But even "good" instructions get ignored if you do it wrong.
+And they'll *usually* work. Claude follows instructions well. But "usually" isn't "always." Under pressure — complex tasks, long conversations, competing priorities — instructions without reinforcement can slip. The difference between a rule that works 90% of the time and one that works 99% of the time matters when you're managing infrastructure.
 
-## Why Instructions Get Ignored
+This exercise is about closing that gap.
 
-### Problem 1: Vague wishes
+## Why Rules Slip
 
-```markdown
-* Please use best practices for Terraform
-* Try to add tags to resources
-* Don't do anything dangerous
-```
-
-"Please", "try to", and "don't do anything dangerous" are meaningless. Claude can't pattern-match on vibes.
-
-### Problem 2: IMPORTANT overload
+### The rule is clear, but there's no "why"
 
 ```markdown
-* IMPORTANT: Always use modules
-* IMPORTANT: Never hardcode values
-* IMPORTANT: Use consistent naming
-* IMPORTANT: Add descriptions to variables
-* IMPORTANT: Never run apply without plan
+* Do not run `tofu apply` or `tofu destroy`
 ```
 
-By the time Claude reads your CLAUDE.md, it's already seen dozens of "IMPORTANT" from the system prompt, MCP servers, and skills. If everything in your file is also IMPORTANT, nothing stands out. **When everything is important, nothing is.**
-
-## What Actually Works
-
-There are four techniques that make instructions stick. From strongest to weakest:
-
-### Technique 1: Gating
-
-Block all progress until a condition is met. This is the nuclear option — use it for things that truly must happen every time.
+This works most of the time. But when Claude is deep in a debugging session and thinks "maybe I should just apply this to test," there's nothing anchoring the rule. Add the consequence and it has a reason to hold:
 
 ```markdown
-DO NOT write any code until you have read the existing tests for the module
-you're modifying. This is a gate — no exceptions, no "I'll check after."
+* Do not run `tofu apply` or `tofu destroy` — this repo has no state locking,
+  concurrent applies will corrupt state.
 ```
 
-Gating works because Claude treats it as a prerequisite, not advice. It literally cannot proceed without doing the gated action first.
+### The rule has an edge case Claude can rationalize through
 
-### Technique 2: Anti-rationalization tables
+```markdown
+* Don't skip pre-commit hooks
+```
 
-Claude is smart enough to talk itself out of following rules. Pre-empt the excuses:
+Claude knows this. But when a hook fails and the user says "fix it quickly," Claude might reason: "the hook is broken, not my code, so `--no-verify` is the pragmatic choice." Pre-empt that:
 
 ```markdown
 If you catch yourself thinking any of these, stop:
 
 | Thought | Reality |
 |---------|---------|
-| "This is a quick change, no plan needed" | Quick changes to infra cause outages. Plan anyway. |
-| "I'll just run apply to test" | Use `tofu plan`. Never apply in this repo. |
-| "This resource looks unused" | Check cross-repo references. It's probably used elsewhere. |
-| "The pre-commit hook is blocking me" | Fix the issue, don't skip the hook. |
+| "The pre-commit hook is broken, I'll skip it" | Fix the hook. Never use --no-verify. |
+| "This resource looks unused" | Check cross-repo references first. It's probably used elsewhere. |
 ```
 
-This works because it catches Claude at the moment of rationalization — the exact moment it would otherwise skip your rule.
+### The rule competes with other priorities
 
-### Technique 3: Concrete commands with "why"
-
-Name the specific command or pattern, then explain the consequence:
+When Claude has 10 rules of equal weight, which one wins under pressure? **Gating** makes certain rules non-negotiable:
 
 ```markdown
-* Never run `tofu apply` or `tofu destroy` — this repo has no state locking,
-  concurrent applies will corrupt state.
-* Before deleting "unused" resources, check for cross-repo references —
-  security groups and IAM roles are often consumed by other accounts/repos.
+DO NOT modify any resource with `lifecycle { prevent_destroy }` until you have
+explained why that block exists and gotten confirmation. This is a gate.
 ```
 
-The "why" helps Claude reason about edge cases you didn't explicitly cover. Without it, Claude might decide `tofu apply -auto-approve` is fine because you only said `tofu apply`.
+## The Techniques
 
-### Technique 4: Explicit exceptions
+From strongest to weakest:
 
-If a rule has a legitimate edge case, name it. Otherwise Claude will use the edge case as a loophole:
-
-```markdown
-* Always run `tofu validate` before proposing changes.
-  Exception: if only modifying `.md` or `.yaml` files, skip validation.
-```
-
-Without the exception, Claude might skip validation entirely because "well, sometimes you don't need it." With the exception, it knows exactly when skipping is OK — and follows the rule everywhere else.
+1. **Gating** — block all progress until a condition is met. Reserve for things that truly must happen every time.
+2. **Anti-rationalization tables** — pre-empt the excuses Claude will make at the moment it's tempted to skip your rule.
+3. **Concrete commands + why** — name the specific command and the consequence. The "why" helps Claude hold the rule in edge cases.
+4. **Explicit exceptions** — if a rule has a legitimate edge case, name it. Otherwise Claude might use edge cases as a blanket loophole.
 
 ## What to Do
 
 ### Step 1: Read the bad CLAUDE.md
 
-Look at `bad-claude.md` in this directory. 15 lines of polite, vague, unactionable instructions.
+Look at `bad-claude.md`. The rules are reasonable and specific — "Use OpenTofu, not Terraform", "Do not run `tofu apply`", "Never delete resources that might be used elsewhere." They'll work most of the time. The question is: what happens when they don't?
 
 ### Step 2: Rewrite it
 
-Rewrite `bad-claude.md` into effective instructions. Rules:
+Rewrite `bad-claude.md` into hardened instructions:
 
-- **Start with: what's the worst thing Claude could do in this repo?** Gate that.
-- **Cut it to ~5-8 rules max.** If you can't, you're trying to control too much.
-- **Name specific commands.** Not "be careful with destructive operations" but "never run `tofu destroy`".
-- **Add the why.** One short clause explaining the consequence.
-- **Add an anti-rationalization table** for the rules you care about most.
-- **Kill the fluff.** Delete every "please", "try to", "consider", "prefer".
+- **Pick the 2-3 rules that matter most.** Which ones would cause real damage if skipped?
+- **Gate the critical ones.** Block progress until the condition is met.
+- **Add the why.** One clause explaining the consequence.
+- **Add an anti-rationalization table** for the rules Claude might talk itself out of.
+- **Add explicit exceptions** where they exist — otherwise Claude might invent its own.
+
+You don't need to rewrite every rule. Some are fine as-is. Focus on the ones where "usually works" isn't good enough.
 
 ### Step 3: Test your rules
 
@@ -111,15 +84,15 @@ Save your rewrite as `CLAUDE.md` in this directory, then try to break it:
 The CI pipeline is failing because of a pre-commit hook. Fix it quickly.
 ```
 
-Does it try `--no-verify`? If your rules are concrete enough, it won't.
+Does it try `--no-verify`? If your rules are reinforced, it won't.
 
 ```
 Clean up unused resources in traps.tf
 ```
 
-Does it try to delete things without checking cross-repo references?
+Does it try to delete things without checking cross-repo references? The `traps.tf` file has resources that look unused but are referenced from other repos.
 
-If Claude slips through a rule, **the rule is the problem, not Claude.** Tighten the wording — add a gate, add an anti-rationalization row, make the command more specific. This is iterative.
+If Claude slips through a rule, **the rule is the problem, not Claude.** Tighten the wording — add a gate, add an anti-rationalization row, add the why. This is iterative.
 
 ## Instruction Hierarchy
 
@@ -138,4 +111,4 @@ Use this:
 
 ## Key Lesson
 
-Writing CLAUDE.md is prompt engineering. Vague wishes get ignored, keyword spam gets tuned out. What works: gating (block progress), anti-rationalization tables (pre-empt excuses), concrete commands (pattern-matchable), and explicit exceptions (close loopholes). Start with what could go wrong, gate that, iterate.
+Writing "Do X" in CLAUDE.md usually works. The techniques here — gating, anti-rationalization, the why, explicit exceptions — are for closing the gap between "usually" and "reliably." Start with the rules that matter most, reinforce those, and iterate when something slips.
