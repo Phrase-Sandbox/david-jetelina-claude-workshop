@@ -42,21 +42,7 @@ Notice the difference:
 
 You're setting the scope instead of reacting to someone else's choices.
 
-### Step 3: Be specific
-
-Still in plan mode, try a specific prompt:
-
-```
-This VPC module has hardcoded CIDR blocks, inconsistent subnet naming (pub1 vs priv_2), and no tags. I want to:
-1. Make CIDR blocks configurable via variables
-2. Standardize naming to use for_each with a map
-3. Add Name/Team/Environment tags to all resources
-Don't rename existing resource addresses — we can't break state.
-```
-
-Notice how the plan is now precise and safe. That last constraint — "don't rename resource addresses" — is the kind of thing you think of *when you have space to think*. Plan mode gives you that space.
-
-### Step 4: Compare
+### Step 3: Compare
 
 Think about the two experiences:
 - **Execute mode**: Claude decided what "clean up" means, what's in scope, what to skip → you review
