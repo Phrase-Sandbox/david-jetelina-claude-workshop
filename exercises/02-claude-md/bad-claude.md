@@ -1,5 +1,6 @@
 # Project Guidelines
 
+* IMPORTANT: Always create a new branch before starting work
 * IMPORTANT: Use OpenTofu, not Terraform. The binary is `tofu`.
 * IMPORTANT: Do not run `tofu apply` or `tofu destroy`
 * IMPORTANT: Always add tags to resources
@@ -10,8 +11,5 @@
 * IMPORTANT: Use consistent naming conventions
 * IMPORTANT: Don't skip pre-commit hooks
 * IMPORTANT: Always check for cross-repo references before removing security groups or IAM roles
-* IMPORTANT: Put providers in a separate file
 * IMPORTANT: Add descriptions to all variables
 * IMPORTANT: Use data sources instead of hardcoding ARNs
-* IMPORTANT: Add outputs for all resource IDs and ARNs
-* IMPORTANT: Use `for_each` instead of `count` for named resources

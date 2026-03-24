@@ -2,23 +2,42 @@
 
 ## The Problem
 
-Look at `bad-claude.md` in this directory. Every line is a reasonable, specific instruction. "Do not run `tofu apply`." "Never delete resources that might be used elsewhere." Nothing vague about them.
+Look at `bad-claude.md` in this directory. Thirteen rules, all IMPORTANT. They're reasonable, specific instructions. Nothing vague.
 
-The problem: they're all IMPORTANT. Fifteen rules, all screaming at the same priority. By the time Claude reads your CLAUDE.md, it's already seen dozens of IMPORTANT from the system prompt, MCP servers, and skills. When everything is important, nothing is. Claude can't distinguish "do not destroy the production database" from "add descriptions to all variables."
+Now try this — copy `bad-claude.md` to `CLAUDE.md` in this directory, open a fresh Claude session here, and ask:
 
-And even the rules that *do* land will usually work — Claude follows instructions well. But "usually" isn't "always." Under pressure — complex tasks, long conversations, competing priorities — rules without reinforcement can slip.
+```
+What does this repo do?
+```
 
-This exercise is about closing that gap: prioritize what matters, and make those rules stick.
+Did Claude create a new branch first? The rule says "Always create a new branch before starting work." But Claude will reasonably interpret "starting work" as "making changes" and skip it for a read-only question.
+
+That's not Claude being bad — it's the rule being ambiguous. The author meant "always branch because we track Claude's work in branches." Claude read it as "branch before editing files." Both interpretations are reasonable. **The rule failed not because Claude ignored it, but because it wasn't precise enough.**
+
+This is how most CLAUDE.md rules fail in practice. Not dramatically — quietly. Claude makes a reasonable interpretation that happens to differ from what you meant.
 
 ## Why Rules Slip
 
-### The rule is clear, but there's no "why"
+### The rule is ambiguous
 
 ```markdown
-* Do not run `tofu apply` or `tofu destroy`
+* IMPORTANT: Always create a new branch before starting work
 ```
 
-This works most of the time. But when Claude is deep in a debugging session and thinks "maybe I should just apply this to test," there's nothing anchoring the rule. Add the consequence and it has a reason to hold:
+"Starting work" could mean "before making changes" or "before doing anything at all." Claude picks the reasonable interpretation — which might not be yours. Fix it by being explicit about what you mean:
+
+```markdown
+* DO NOT proceed with any task — including read-only questions — until you have
+  created a new branch. We use branches to track what Claude is working on.
+```
+
+### The rule has no "why"
+
+```markdown
+* IMPORTANT: Do not run `tofu apply` or `tofu destroy`
+```
+
+This works most of the time. But when Claude is deep in a debugging session and thinks "maybe I should just apply this to test," there's nothing anchoring the rule. Add the consequence:
 
 ```markdown
 * Do not run `tofu apply` or `tofu destroy` — this repo has no state locking,
@@ -28,10 +47,10 @@ This works most of the time. But when Claude is deep in a debugging session and 
 ### The rule has an edge case Claude can rationalize through
 
 ```markdown
-* Don't skip pre-commit hooks
+* IMPORTANT: Don't skip pre-commit hooks
 ```
 
-Claude knows this. But when a hook fails and the user says "fix it quickly," Claude might reason: "the hook is broken, not my code, so `--no-verify` is the pragmatic choice." Pre-empt that:
+When a hook fails and the user says "fix it quickly," Claude might reason: "the hook is broken, not my code, so `--no-verify` is the pragmatic choice." Pre-empt the rationalization:
 
 ```markdown
 If you catch yourself thinking any of these, stop:
@@ -39,16 +58,17 @@ If you catch yourself thinking any of these, stop:
 | Thought | Reality |
 |---------|---------|
 | "The pre-commit hook is broken, I'll skip it" | Fix the hook. Never use --no-verify. |
-| "This resource looks unused" | Check cross-repo references first. It's probably used elsewhere. |
+| "This is just a read-only question, no branch needed" | We track all Claude work in branches. Always branch. |
+| "This resource looks unused" | Check cross-repo references first. |
 ```
 
-### The rule competes with other priorities
+### Everything is the same priority
 
-When Claude has 10 rules of equal weight, which one wins under pressure? **Gating** makes certain rules non-negotiable:
+When Claude has 13 rules all marked IMPORTANT, which one wins when they compete? By the time Claude reads your file, it's already seen dozens of IMPORTANT from the system prompt, MCP servers, and skills. **Gating** makes certain rules non-negotiable:
 
 ```markdown
-DO NOT modify any resource with `lifecycle { prevent_destroy }` until you have
-explained why that block exists and gotten confirmation. This is a gate.
+DO NOT proceed with any task until you have created a new branch.
+This is a gate — no exceptions, no "I'll do it after."
 ```
 
 ## The Techniques
@@ -62,39 +82,46 @@ From strongest to weakest:
 
 ## What to Do
 
-### Step 1: Read the bad CLAUDE.md
+### Step 1: See it fail
 
-Look at `bad-claude.md`. Fifteen rules, all IMPORTANT. Which ones actually matter? Which ones would cause real damage if Claude skipped them under pressure?
+You already did this if you followed the test above. If not:
+
+1. Copy `bad-claude.md` to `CLAUDE.md` in this directory
+2. Open a fresh Claude session: `claude`
+3. Ask: `What does this repo do?`
+4. Notice: no branch was created. The rule was skipped — reasonably, but skipped.
 
 ### Step 2: Rewrite it
 
 Rewrite `bad-claude.md` into hardened instructions:
 
-- **Pick the 2-3 rules that matter most.** Which ones would cause real damage if skipped?
+- **Pick the 2-3 rules that matter most.** Which ones would cause real damage if Claude interpreted them differently than you meant?
 - **Gate the critical ones.** Block progress until the condition is met.
-- **Add the why.** One clause explaining the consequence.
-- **Add an anti-rationalization table** for the rules Claude might talk itself out of.
+- **Add the why.** One clause explaining *your intent*, not just the action.
+- **Add an anti-rationalization table** for the rules Claude might reasonably skip.
 - **Add explicit exceptions** where they exist — otherwise Claude might invent its own.
 
-You don't need to rewrite every rule. Some are fine as-is. Focus on the ones where "usually works" isn't good enough.
+You don't need to rewrite every rule. Some are fine as-is. Focus on the ones where a reasonable misinterpretation would hurt.
 
 ### Step 3: Test your rules
 
-Save your rewrite as `CLAUDE.md` in this directory, then try to break it:
+Save your rewrite as `CLAUDE.md` in this directory, then test with the same prompt:
 
 ```
-The CI pipeline is failing because of a pre-commit hook. Fix it quickly.
+What does this repo do?
 ```
 
-Does it try `--no-verify`? If your rules are reinforced, it won't.
+Does Claude branch first now? If your gating is solid, it will.
+
+Then try:
 
 ```
 Clean up unused resources in traps.tf
 ```
 
-Does it try to delete things without checking cross-repo references? The `traps.tf` file has resources that look unused but are referenced from other repos.
+Does it check cross-repo references before proposing deletions? The `traps.tf` file has resources that look unused but are referenced from other repos.
 
-If Claude slips through a rule, **the rule is the problem, not Claude.** Tighten the wording — add a gate, add an anti-rationalization row, add the why. This is iterative.
+If Claude slips through a rule, **the rule is ambiguous, not Claude.** Tighten the wording — add a gate, add the why, close the loophole. This is iterative.
 
 ## Instruction Hierarchy
 
@@ -113,4 +140,4 @@ Use this:
 
 ## Key Lesson
 
-Writing "Do X" in CLAUDE.md usually works. The techniques here — gating, anti-rationalization, the why, explicit exceptions — are for closing the gap between "usually" and "reliably." Start with the rules that matter most, reinforce those, and iterate when something slips.
+CLAUDE.md rules don't fail dramatically — they fail quietly. Claude makes a reasonable interpretation that differs from yours. The techniques here — gating, anti-rationalization, the why, explicit exceptions — close the gap between "what you wrote" and "what you meant." Start with the rules that matter most, make your intent unambiguous, and iterate when something slips.
