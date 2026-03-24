@@ -25,7 +25,7 @@ Ask yourself:
 
 The work is probably fine. But you're reviewing a scope you didn't set. For a Python script, no big deal. For Terraform managing production infrastructure, you want to be the one deciding what changes and what doesn't.
 
-Hit `Ctrl+C`.
+Hit `Ctrl+C`. If you already approved changes, run `git checkout .` to reset the files before continuing.
 
 ### Step 2: Now use plan mode
 
