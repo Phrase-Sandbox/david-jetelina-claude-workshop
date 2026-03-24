@@ -13,23 +13,23 @@ Plan mode flips the dynamic: **you decide what happens, then Claude executes.**
 Open Claude Code in this directory and say:
 
 ```
-Clean up this VPC module. It's a mess.
+Add tags to all resources in this VPC module and make the CIDR blocks configurable via variables.
 ```
 
-Watch what it does. It will probably produce reasonable edits — maybe extract variables, standardize naming, add tags. Don't approve anything yet. Just look at what it chose to do.
+Watch what it does. It'll jump straight to editing — extracting variables, adding tag blocks. Don't approve anything yet. Just look at what it chose to do.
 
 Ask yourself:
-- Did it ask what "clean up" means, or did it decide for you?
-- Would you have made the same choices?
 - Did it consider that renaming resource addresses would require `tofu state mv`?
+- Did it pick reasonable variable names, or would you have chosen differently?
+- Did it touch the subnet naming inconsistency (pub1 vs priv_2) while it was in there?
 
-The work might be fine. But **you're reviewing decisions you didn't make.** For a Python script, that's OK. For Terraform managing real infrastructure, you want to be driving.
+The work is probably fine. But **you're reviewing decisions you didn't make.** For a Python script, that's OK. For Terraform managing real infrastructure, you want to be driving.
 
 Hit `Ctrl+C`.
 
 ### Step 2: Now use plan mode
 
-Press `Shift+Tab` to enter plan mode (the input indicator changes). Give the same prompt:
+Press `Shift+Tab` to enter plan mode (the input indicator changes). Now try a vague prompt:
 
 ```
 Clean up this VPC module. It's a mess.
@@ -59,10 +59,10 @@ Notice how the plan is now precise and safe. That last constraint — "don't ren
 ### Step 4: Compare
 
 Think about the two experiences:
-- **Execute mode**: Claude decides what "clean up" means → you review diffs reactively
-- **Plan mode**: You decide what "clean up" means → Claude executes your intent
+- **Execute mode**: Clear instruction → Claude charges ahead, you review diffs reactively
+- **Plan mode**: Vague or complex task → you shape the approach together before any code changes
 
-Same tool, same prompt, different dynamic. For infra work, plan mode should be your default.
+For infra work, plan mode should be your default.
 
 ## Shortcut
 
