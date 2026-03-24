@@ -2,11 +2,13 @@
 
 ## The Problem
 
-Look at `bad-claude.md` in this directory. Every line is a reasonable instruction. "Do not run `tofu apply`." "Never delete resources that might be used elsewhere." These aren't vague — they're clear, specific rules.
+Look at `bad-claude.md` in this directory. Every line is a reasonable, specific instruction. "Do not run `tofu apply`." "Never delete resources that might be used elsewhere." Nothing vague about them.
 
-And they'll *usually* work. Claude follows instructions well. But "usually" isn't "always." Under pressure — complex tasks, long conversations, competing priorities — instructions without reinforcement can slip. The difference between a rule that works 90% of the time and one that works 99% of the time matters when you're managing infrastructure.
+The problem: they're all IMPORTANT. Fifteen rules, all screaming at the same priority. By the time Claude reads your CLAUDE.md, it's already seen dozens of IMPORTANT from the system prompt, MCP servers, and skills. When everything is important, nothing is. Claude can't distinguish "do not destroy the production database" from "add descriptions to all variables."
 
-This exercise is about closing that gap.
+And even the rules that *do* land will usually work — Claude follows instructions well. But "usually" isn't "always." Under pressure — complex tasks, long conversations, competing priorities — rules without reinforcement can slip.
+
+This exercise is about closing that gap: prioritize what matters, and make those rules stick.
 
 ## Why Rules Slip
 
@@ -62,7 +64,7 @@ From strongest to weakest:
 
 ### Step 1: Read the bad CLAUDE.md
 
-Look at `bad-claude.md`. The rules are reasonable and specific — "Use OpenTofu, not Terraform", "Do not run `tofu apply`", "Never delete resources that might be used elsewhere." They'll work most of the time. The question is: what happens when they don't?
+Look at `bad-claude.md`. Fifteen rules, all IMPORTANT. Which ones actually matter? Which ones would cause real damage if Claude skipped them under pressure?
 
 ### Step 2: Rewrite it
 
